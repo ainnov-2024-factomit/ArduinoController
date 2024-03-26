@@ -89,7 +89,7 @@ void UpdateFromSerial()
 { 
     if (Serial.available() > 0)
     {
-        String command = Serial.readStringUntil('\n');
+        String command = Serial.readString();
         
         if (command[0] != 'c')
         {
