@@ -102,7 +102,7 @@ void UpdateFromSerial()
         while (command.length() > 0)
         {
             int index = command.indexOf(',');
-            if (index == -1) // No space found
+            if (index == -1) // No comma found
             {
                 strs[stringCount++] = command;
                 break;
@@ -136,7 +136,7 @@ void WriteDataToSerial()
     command += ",";
     command += data[2];
 
-    Serial.println(command);
+    Serial.print(command);
 }
 
 int GetUltrasoundData(int trigPin, int echoPin)
