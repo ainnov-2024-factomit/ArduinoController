@@ -1,0 +1,32 @@
+# Ignore compiled object files
+*.o
+
+# Ignore executables
+*.exe
+*.out
+
+# Ignore build directories
+build/
+dist/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore user-specific files
+*.bak
+*.swp
+*.swo
+
+# Ignore dependency directories
+node_modules/
+vendor/
+
+.mono/
