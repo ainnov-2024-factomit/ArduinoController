@@ -135,7 +135,7 @@ void WriteDataToSerial()
 {
     String command = "";
 
-    command += "d,";
+    command += "d";
     command += data[0];
     command += ",";
     command += data[1];
