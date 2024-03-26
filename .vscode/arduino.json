@@ -1,0 +1,6 @@
+{
+    "sketch": "CraneController/CraneController.ino",
+    "port": "/dev/ttyACM0",
+    "board": "arduino:avr:uno",
+    "programmer": "avrispmkii"
+}
