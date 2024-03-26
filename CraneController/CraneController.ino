@@ -89,37 +89,43 @@ void UpdateFromSerial()
 { 
     if (Serial.available() > 0)
     {
-        String command = Serial.readString();
+        String commands = Serial.readString();
         
-        if (command[0] != 'c')
-        {
-            Serial.flush();
+        if (commands[0] != 'c')
             return;
-        }
+
+        commands = commands.substring(1); // Remove the first character
 
         String strs[6];
         int stringCount = 0;
-        while (command.length() > 0)
+
+        if (commands.length() < 6)
+            return;
+
+        while (commands.length() > 0)
         {
-            int index = command.indexOf(',');
+            if (stringCount >= 6)
+                break;
+
+            int index = commands.indexOf(',');
             if (index == -1) // No comma found
             {
-                strs[stringCount++] = command;
+                strs[stringCount++] = commands;
                 break;
             }
             else
             {
-                strs[stringCount++] = command.substring(0, index);
-                command = command.substring(index+1);
+                strs[stringCount++] = commands.substring(0, index);
+                commands = commands.substring(index+1);
             }
         }
 
-        currentCommands[0][0] = strs[1].toInt();
-        currentCommands[0][1] = strs[2].toInt();
-        currentCommands[1][0] = strs[3].toInt();
-        currentCommands[1][1] = strs[4].toInt();
-        currentCommands[2][0] = strs[5].toInt();
-        currentCommands[2][1] = strs[6].toInt();
+        currentCommands[0][0] = strs[0].toInt();
+        currentCommands[0][1] = strs[1].toInt();
+        currentCommands[1][0] = strs[2].toInt();
+        currentCommands[1][1] = strs[3].toInt();
+        currentCommands[2][0] = strs[4].toInt();
+        currentCommands[2][1] = strs[5].toInt();
 
         Serial.flush();
     }
