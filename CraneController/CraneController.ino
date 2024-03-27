@@ -28,9 +28,9 @@ const int basketMotorControlPin = 0;
 int currentCommands[3][2];
 
 // Data storage
-int rotationMotorLastRawState = 0;
-int rotationMotorAngle = 0;
-int rotationAngleStep = 0;
+int rotationPotentiometerLastRawState = 0;
+int rotationPotentiometerAngle = 0;
+const int rotationAngleStep = 9;
 int data[3];
 
 void setup()
@@ -69,7 +69,7 @@ void setup()
     ////////////////////////////////////////////////
 
     // Init values
-    rotationMotorLastRawState = digitalRead(rotationPotentiometerPinA);
+    rotationPotentiometerLastRawState = digitalRead(rotationPotentiometerPinA);
 }
 
 void loop() {
@@ -78,7 +78,7 @@ void loop() {
     // Get and store data
     data[0] = GetUltrasoundData(heightUsTrigPin, heightUsEchoPin);
     data[1] = GetUltrasoundData(depthUsTrigPin, depthUsEchoPin);
-    data[2] = GetPotentiometerData(rotationMotorDirectionPin, rotationMotorPwmPin);
+    data[2] = GetPotentiometerData(rotationPotentiometerPinA, rotationPotentiometerPinB);
 
     MoveCrane();
 
@@ -134,7 +134,8 @@ void UpdateFromSerial()
 void WriteDataToSerial()
 {
     String command = "";
-
+    Serial.flush();
+    
     command += "d";
     command += data[0];
     command += ",";
@@ -164,9 +165,9 @@ int GetUltrasoundData(int trigPin, int echoPin)
 }
 
 int GetPotentiometerData(int pinA, int pinB) {
-    int potentiometerState = digitalRead(pinA);    
+    int potentiometerState = digitalRead(pinA);
    
-   if (potentiometerState != rotationMotorLastRawState){     
+   if (potentiometerState != rotationPotentiometerLastRawState){     
      // outputB != outputA state, encoder is rotating clockwise
      if (digitalRead(pinB) != potentiometerState) { 
       movePotentiometerClockwise();
@@ -176,15 +177,15 @@ int GetPotentiometerData(int pinA, int pinB) {
      }
    }
 
-    rotationMotorLastRawState = potentiometerState;
+    rotationPotentiometerLastRawState = potentiometerState;
 }
 
 void movePotentiometerClockwise() {
-    rotationMotorAngle = rotationMotorAngle + rotationAngleStep;
+    rotationPotentiometerAngle = rotationPotentiometerAngle + rotationAngleStep;
 }
 
 void movePotentiometerCounterClockwise() {
-    rotationMotorAngle = rotationMotorAngle - rotationAngleStep;
+    rotationPotentiometerAngle = rotationPotentiometerAngle - rotationAngleStep;
 }
 
 void MoveCrane() {
