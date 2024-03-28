@@ -1,5 +1,5 @@
-int pinA = 7;
-int pinB = 6;
+int pinA = 2;
+int pinB = 4;
 int rawValue = 0;
 int angleStep = 9;
 int angle = 0;

@@ -4,25 +4,26 @@ const int depthUsTrigPin = 7;
 const int depthUsEchoPin = 10;
 
 // Ultrasound basket height
-const int heightUsTrigPin = 2;
-const int heightUsEchoPin = 4;
+// const int heightUsTrigPin = 2;
+// const int heightUsEchoPin = 4;
 
 // Potentiometer measurement
-const int rotationPotentiometerPinA = 5;
-const int rotationPotentiometerPinB = 6;
+const int rotationPotentiometerPinA = 4;
+const int rotationPotentiometerPinB = 2;
 
 // Depth motor
-const int depthMotorDirectionPin = 12;
-const int depthMotorPwmPin = 3;
-const int depthMotorBrakePin = 9;
+const int depthMotorDirectionPin = 13;
+const int depthMotorPwmPin = 11;
+const int depthMotorBrakePin = 8;
 
 // Rotation motor
-const int rotationMotorDirectionPin = 13;
-const int rotationMotorPwmPin = 11;
-const int rotationMotorBrakePin = 8;
+const int rotationMotorDirectionPin = 12;
+const int rotationMotorPwmPin = 3;
+const int rotationMotorBrakePin = 9;
 
 // Basket motor
-const int basketMotorControlPin = 0;
+const int basketMotorControlPinUp = 5;
+const int basketMotorControlPinDown = 6;
 
 // Define the current commands
 int currentCommands[3][2];
@@ -46,8 +47,8 @@ void setup()
     pinMode(depthUsEchoPin, INPUT);
 
     // Height sensor
-    pinMode(heightUsTrigPin, OUTPUT);
-    pinMode(heightUsEchoPin, INPUT);
+    // pinMode(heightUsTrigPin, OUTPUT);
+    // pinMode(heightUsEchoPin, INPUT);
 
     // Rotation potentiometer
     pinMode(rotationPotentiometerPinA, INPUT);
@@ -64,7 +65,8 @@ void setup()
     pinMode(rotationMotorPwmPin, OUTPUT);
     pinMode(rotationMotorBrakePin, OUTPUT);
 
-    pinMode(basketMotorControlPin, OUTPUT);
+    pinMode(basketMotorControlPinUp, OUTPUT);
+    pinMode(basketMotorControlPinDown, OUTPUT);
 
     ////////////////////////////////////////////////
 
@@ -76,7 +78,8 @@ void loop() {
     UpdateFromSerial();
 
     // Get and store data
-    data[0] = GetUltrasoundData(heightUsTrigPin, heightUsEchoPin);
+    // data[0] = GetUltrasoundData(heightUsTrigPin, heightUsEchoPin);
+    data[0] = 0;
     data[1] = GetUltrasoundData(depthUsTrigPin, depthUsEchoPin);
     data[2] = GetPotentiometerData(rotationPotentiometerPinA, rotationPotentiometerPinB);
 
@@ -143,7 +146,7 @@ void WriteDataToSerial()
     command += ",";
     command += data[2];
 
-    Serial.print(command);
+    Serial.println(command);
 }
 
 int GetUltrasoundData(int trigPin, int echoPin)
@@ -156,7 +159,7 @@ int GetUltrasoundData(int trigPin, int echoPin)
     digitalWrite(trigPin, LOW);
 
     // Measure the duration of the echo pulse
-    long duration = pulseIn(echoPin, HIGH);
+    long duration = pulseIn(echoPin, HIGH, 10000);
 
     // Calculate the distance in centimeters
     float distance = duration * 0.034 / 2;
@@ -166,18 +169,23 @@ int GetUltrasoundData(int trigPin, int echoPin)
 
 int GetPotentiometerData(int pinA, int pinB) {
     int potentiometerState = digitalRead(pinA);
-   
-   if (potentiometerState != rotationPotentiometerLastRawState){     
+
+   if (potentiometerState != rotationPotentiometerLastRawState)
+   {
+        int potentiometerStateB = digitalRead(pinB);
+
      // outputB != outputA state, encoder is rotating clockwise
-     if (digitalRead(pinB) != potentiometerState) { 
-      movePotentiometerClockwise();
+     if (potentiometerStateB != potentiometerState) { 
+        movePotentiometerClockwise();
      } 
      else {
-       movePotentiometerCounterClockwise();
+        movePotentiometerCounterClockwise();
      }
    }
 
     rotationPotentiometerLastRawState = potentiometerState;
+
+    return rotationPotentiometerAngle;
 }
 
 void movePotentiometerClockwise() {
@@ -189,12 +197,33 @@ void movePotentiometerCounterClockwise() {
 }
 
 void MoveCrane() {
-    // TODO Fix basket handling
     // Move basket motor
-    if (currentCommands[0][0] == 1)
-        analogWrite(basketMotorControlPin, HIGH);
-    else
-        analogWrite(basketMotorControlPin, LOW);
+    if (currentCommands[0][1] == 100) {
+        if (currentCommands[0][0] == 1)
+        {
+            digitalWrite(basketMotorControlPinUp, HIGH);
+            digitalWrite(basketMotorControlPinDown, LOW);
+
+            delay(4000);
+
+            digitalWrite(basketMotorControlPinUp, LOW);
+            digitalWrite(basketMotorControlPinDown, LOW);
+        }
+        else
+        {
+            digitalWrite(basketMotorControlPinUp, LOW);
+            digitalWrite(basketMotorControlPinDown, HIGH);
+
+            delay(4000);
+
+            digitalWrite(basketMotorControlPinUp, HIGH);
+            digitalWrite(basketMotorControlPinDown, HIGH);
+        }  
+    }
+    else {
+        digitalWrite(basketMotorControlPinUp, LOW);
+        digitalWrite(basketMotorControlPinDown, LOW);
+    }
 
     // Move depth motor
     if (currentCommands[1][0] == 1)
@@ -202,13 +231,17 @@ void MoveCrane() {
     else
         digitalWrite(depthMotorDirectionPin, LOW);
 
-    int depthMotorSpeed = GetMotorSpeedFromPercentage(currentCommands[1][1]);
-    if(depthMotorSpeed > 0)
+    // int depthMotorSpeed = GetMotorSpeedFromPercentage(currentCommands[1][1]);
+    if (currentCommands[1][1] == 100 && data[1] < 52 && data[1] > 20)
+    {
         digitalWrite(depthMotorBrakePin, LOW);
+        analogWrite(depthMotorPwmPin, 255);
+    }
     else
+    {
         digitalWrite(depthMotorBrakePin, HIGH);
-
-    analogWrite(depthMotorPwmPin, depthMotorSpeed);
+        analogWrite(depthMotorPwmPin, 0);
+    }
 
     // Move rotation motor
     if (currentCommands[2][0] == 1)
@@ -226,10 +259,6 @@ void MoveCrane() {
 }
 
 int GetMotorSpeedFromPercentage(int percentage)
-{
-    const int input_voltage  = 9; //V
-    const int nominal_voltage  = 5; ////V
-    const int MAX_SPEED  = int(nominal_voltage * 255 / input_voltage);
-    
-    return percentage * MAX_SPEED / 100;
+{    
+    return percentage * 255 / 100;
 }
